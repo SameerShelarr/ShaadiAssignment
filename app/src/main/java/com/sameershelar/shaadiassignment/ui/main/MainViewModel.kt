@@ -108,5 +108,10 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun sendAdapterUpdatedEvent() =
+        viewModelScope.launch {
+            shaadiAPIEventsChannel.send(ShaadiAPIEvents.ShaadiRecyclerViewAdapterDataUpdated)
+        }
+
     //endregion
 }

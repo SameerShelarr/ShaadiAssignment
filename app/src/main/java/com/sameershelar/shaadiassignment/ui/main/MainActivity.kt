@@ -8,7 +8,8 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY
+import androidx.recyclerview.widget.RecyclerView.Adapter.StateRestorationPolicy.*
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -20,18 +21,20 @@ import com.sameershelar.shaadiassignment.events.ShaadiAPIEvents
 import com.sameershelar.shaadiassignment.utils.AppConstants
 import com.sameershelar.shaadiassignment.utils.exhaustive
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.*
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity(), OnMemberAcceptedOrDeclinedClickListener {
+class MainActivity : AppCompatActivity(),
+    OnMemberAcceptedOrDeclinedClickListener,
+    SwipeRefreshLayout.OnRefreshListener {
 
     //region declarations and variables
 
     companion object {
         private const val TAG = "MainActivity"
+        private const val BUNDLE_RECYCLER_LAYOUT = "bundle_recycler_layout"
     }
 
     private lateinit var binding: ActivityMainBinding
@@ -63,19 +66,51 @@ class MainActivity : AppCompatActivity(), OnMemberAcceptedOrDeclinedClickListene
             retryButton.setOnClickListener {
                 viewModel.getMembersFromRemoteServerAndSaveInDb()
             }
+            swipeLayout.setOnRefreshListener(this@MainActivity)
         }
 
-        viewModel.getMembersFromRemoteServerAndSaveInDb()
+        fetchAllMembersFromRemoteServerAndSaveInDb()
 
+        observingAllMembers()
+
+        receiveAllEvents()
+    }
+
+    override fun onMemberAcceptedOrDeclinedClicked(
+        member: Member,
+        position: Int,
+        isAccepted: Boolean
+    ) {
+        val memberSelection = MemberSelection(Calendar.getInstance().time, isAccepted)
+        member.memberSelection = memberSelection
+        viewModel.updateMember(member)
+    }
+
+    override fun onRefresh() {
+        viewModel.isDataFetched = false
+        binding.swipeLayout.isRefreshing = false
+        fetchAllMembersFromRemoteServerAndSaveInDb()
+    }
+
+    //endregion
+
+    //region helper methods
+
+    private fun fetchAllMembersFromRemoteServerAndSaveInDb() {
+        viewModel.getMembersFromRemoteServerAndSaveInDb()
+    }
+
+    private fun observingAllMembers() {
         viewModel.getAllMembers().observe(this) { members ->
             Log.d(TAG, "onCreate: Found ${members.size} members in DB")
-            if (members.isNotEmpty()) {
-                adapter.submitList(members)
-            } else {
-                binding.emptyView.isVisible = true
+            if (adapter.itemCount != 0 && adapter.itemCount != members.size) {
+                viewModel.sendAdapterUpdatedEvent()
             }
+            adapter.submitList(members.sortedByDescending { member -> member.mId })
         }
+    }
 
+    private fun receiveAllEvents() {
         lifecycleScope.launchWhenCreated {
             viewModel.shaadiAPIEvents.collect { event ->
                 when (event) {
@@ -87,6 +122,7 @@ class MainActivity : AppCompatActivity(), OnMemberAcceptedOrDeclinedClickListene
                     is ShaadiAPIEvents.ShaadiAPIDataLoadingFinished -> {
                         binding.progressBar.isVisible = false
                         binding.emptyView.isVisible = false
+                        binding.swipeLayout.isRefreshing = false
                     }
 
                     is ShaadiAPIEvents.ShaadiAPIDataFetchFailed -> {
@@ -102,25 +138,16 @@ class MainActivity : AppCompatActivity(), OnMemberAcceptedOrDeclinedClickListene
                             binding.emptyView.isVisible = viewModel.isMembersTableEmpty()
                         }
                         binding.progressBar.isVisible = false
+                        binding.swipeLayout.isRefreshing = false
+                    }
+
+                    is ShaadiAPIEvents.ShaadiRecyclerViewAdapterDataUpdated -> {
+                        binding.shaadiUserRecyclerView.scrollToPosition(0)
                     }
                 }.exhaustive
             }
         }
     }
-
-    override fun onMemberAcceptedOrDeclinedClicked(
-        member: Member,
-        position: Int,
-        isAccepted: Boolean
-    ) {
-        val memberSelection = MemberSelection(Calendar.getInstance().time, isAccepted)
-        member.memberSelection = memberSelection
-        viewModel.updateMember(member)
-    }
-
-    //endregion
-
-    //region helper methods
 
     //For testing
     private fun addDummyData() {

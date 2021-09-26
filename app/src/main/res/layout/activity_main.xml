@@ -74,16 +74,23 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/shaadi_user_recycler_view"
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipe_layout"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:scrollbars="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/progress_bar"
-            tools:listitem="@layout/shaadi_member_item_layout" />
+            app:layout_constraintTop_toBottomOf="@+id/progress_bar">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/shaadi_user_recycler_view"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:scrollbars="vertical"
+                tools:listitem="@layout/shaadi_member_item_layout" />
+
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

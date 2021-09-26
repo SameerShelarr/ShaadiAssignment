@@ -16,7 +16,7 @@ interface MemberDao {
     @Update
     suspend fun update(member: Member)
 
-    @Query("SELECT * FROM member")
+    @Query("SELECT * FROM member ORDER BY id DESC")
     fun getAll(): LiveData<List<Member>>
 
     @Query("SELECT * FROM member ORDER BY id LIMIT 1")
