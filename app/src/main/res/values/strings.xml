@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Shaadi Assignment</string>
+    <string name="logo">Logo</string>
+    <string name="user_image">User image</string>
+    <string name="decline">Decline</string>
+    <string name="accept">Accept</string>
+    <string name="retry_underlined"><u>Retry?</u></string>
+    <string name="retry">Retry</string>
+    <string name="profile_image">Profile image</string>
+    <string name="you_have_accepted_this_member">You have accepted this member!</string>
+    <string name="you_have_declined_this_member">You have declined this member!</string>
+    <string name="unable_to_fetch_members">Unable to fetch members from server!</string>
+    <string name="no_members_to_show">No members to show!</string>
+
+</resources>
